@@ -1,42 +1,56 @@
-# Linux Troubleshooting Journey
+# Linux Troubleshooting – When Curiosity Meets Reality
 
-> Real incidents, real mistakes, real learning
 
-I'm Jill Ravaliya, learning Linux to build a career in cloud engineering. This repository documents actual problems I encountered on my personal Ubuntu system – not from tutorials, but from genuine troubleshooting under pressure.
+> **From "What does /proc do?" → To understanding how Linux actually works**
 
-**What this shows**: How I diagnose issues, recover systems, and learn from breaking things.
+![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
+![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
+![Shell Script](https://img.shields.io/badge/Shell_Script-121011?style=for-the-badge&logo=gnu-bash&logoColor=white)
+
+</div>
 
 ---
 
-## 🔴 Incident 1: The Day I Killed GNOME (My First Real Crisis)
+## I Wasn't Trying to Become a Linux Expert
 
-### The Exploration
 
-Months ago, I wasn't trying to "become a Linux expert" or anything. I was just deeply curious. I had installed Ubuntu and I was slowly trying to understand what Linux actually looks like from the inside – not just the desktop, but what's really happening underneath.
+Months ago, I wasn't following any course or tutorial.
 
-At first, I started exploring the filesystem, step by step:
+I had just installed Ubuntu, and I was curious.
 
-- `/` – the root, where everything begins
-- `/home` – my files
-- `/etc` – configuration files
-- `/var` – logs and temporary stuff
-- `/bin`, `/sbin`, `/usr` – commands and programs
+I wanted to see what Linux actually looks like from the inside — not just the desktop, but what's really happening underneath.
 
-One day I reached `/proc`.
+So I started exploring the filesystem, step by step:
 
-It looked... different. Not like other directories. Inside were numbers, strange files, system-looking things. At that time, I didn't fully understand what `/proc` truly was. Later I learned that `/proc` is not a real filesystem stored on disk – it's a **virtual filesystem** that represents running processes and kernel data in real time. It's a window into what the kernel sees.
+```
+/         → the root, where everything begins
+/home     → okay, my files live here
+/etc      → lots of configuration files
+/var      → logs and temporary stuff
+/bin      → commands live here
+/sbin     → system commands
+/usr      → user programs and libraries
+```
+
+Then I reached `/proc`.
+
+It looked... different. Not like other directories. Inside were numbers, strange files, system-looking things. At that time, I didn't fully understand what `/proc` truly was. Later I learned that `/proc` is not a real filesystem stored on disk — it's a **virtual filesystem** that represents running processes and kernel data in real time. It's a window into what the kernel sees.
 
 But at that moment, I only had one thought:
 
 > "Why are there so many numbers here?"
 
-That's when I first connected `/proc` with commands like `ps` and `top`. I had learned that `ps` shows running processes and `top` shows them live with CPU and RAM usage. The numbered directories in `/proc` – like `/proc/1234` – are actually live representations of running processes, where `1234` is the PID (Process ID).
+That's when I connected `/proc` with commands like `ps` and `top`. I had learned that `ps` shows running processes and `top` shows them live with CPU and RAM usage. The numbered directories in `/proc` — like `/proc/1234` — are actually live representations of running processes, where `1234` is the PID (Process ID).
 
 I didn't fully understand processes yet, but I knew this:
 
 > "These commands show what's running inside my system right now."
 
-### The Mistake
+---
+
+## Incident 1: The Day Everything Went Black
+
+### Discovery
 
 One day, out of pure curiosity, I typed:
 
@@ -46,8 +60,11 @@ top
 
 The screen filled with moving numbers:
 
-![Top Command - First Time Seeing GNOME Processes](screenshots/incident-01-killed-gnome/01-top-command-original.png)
+<div align="center">
+<img src="screenshots/incident-01-killed-gnome/01-top-command-original.png" alt="Top Command - First Time Seeing GNOME Processes" width="800"/>
+
 *First time running top - overwhelmed by all the processes, focusing on the one using most resources*
+</div>
 
 ```
 PID   USER  %CPU  %MEM  COMMAND
@@ -75,6 +92,8 @@ So I noted the PID – let's say it was `7515` – and typed:
 ```bash
 kill -9 7515
 ```
+
+---
 
 ### The Crash
 
@@ -110,6 +129,8 @@ No Stack Overflow.
 Only a text screen.
 
 At that time, I didn't even know the word **"TTY"** (TeleTYpewriter – a text-based virtual console). I just knew I was in some raw terminal that felt like the basement of the operating system.
+
+---
 
 ### The Struggle
 
@@ -169,8 +190,11 @@ The system rebooted. I waited.
 
 My heart sank again. I tried different commands. Different systemd targets. Different services.
 
-![Attempting systemctl Recovery Commands](screenshots/incident-01-killed-gnome/02-systemctl-recovery-attempts.png)
+<div align="center">
+<img src="screenshots/incident-01-killed-gnome/02-systemctl-recovery-attempts.png" alt="Attempting systemctl Recovery Commands" width="800"/>
+
 *Desperately trying systemctl commands to bring back the GUI - checking gdm3 status*
+</div>
 
 ```bash
 systemctl restart gdm3
@@ -193,27 +217,27 @@ That moment felt unreal. I didn't feel like I had "learned Linux."
 
 **I felt like I had escaped from a cave.**
 
+---
+
 ### What I Learned (Then)
 
 That day I realized something deep, even if I couldn't explain it in technical words yet:
 
 > "Sometimes breaking things teaches you more in 10 minutes than reading for 10 days."
 
-What I understand now:
-- **gnome-shell** is the compositor and window manager – it renders everything you see
-- Killing it with `kill -9` (SIGKILL) removes the entire graphical layer
-- The system keeps running underneath, but there's nothing to draw the desktop
-- TTY (text terminals) exist independently of the GUI
-- systemd manages services and can restart them
-- Multiple reboots eventually brought services back in correct order
+**What I understand now:**
 
-**Time to fix**: ~30-45 minutes (mostly panic and trial-and-error)  
-**System**: Ubuntu 22.04 LTS (estimated)  
-**Difficulty**: High (first-timer with no recovery knowledge)
+| Component | What It Does | What Happens When Killed |
+|-----------|--------------|--------------------------|
+| `gnome-shell` | Compositor and window manager – renders everything you see | Entire graphical layer disappears |
+| SIGKILL (`-9`) | Most forceful termination signal | Process dies immediately, no cleanup |
+| TTY | Text-based virtual console | Always running, independent of GUI |
+| systemd | Init system (PID 1) managing all services | Can restart crashed services |
+| Boot sequence | Multiple reboots restored services in correct order | Fresh start fixes broken states |
 
 ---
 
-## 🟠 Incident 2: The Boot That Never Came (Unexpected Interruption)
+## Incident 2: The Boot That Never Came
 
 ### When Everything Changed
 
@@ -221,8 +245,11 @@ Then suddenly, during one of my reboots while experimenting with killing GNOME p
 
 Instead of the login screen, I saw **text scrolling on a black screen**:
 
-![Boot Timeout Errors](screenshots/incident-02-boot-failure/01-timeout-errors.png)
+<div align="center">
+<img src="screenshots/incident-02-boot-failure/01-timeout-errors.png" alt="Boot Timeout Errors" width="800"/>
+
 *Boot sequence hanging - systemd waiting for non-existent disk UUIDs*
+</div>
 
 ```
 [  OK  ] Started User Manager for UID 1000.
@@ -246,18 +273,31 @@ The system wasn't reaching the desktop at all. This was happening **before** the
 
 I had accidentally stumbled into a completely different problem while experimenting with GUI crashes.
 
+---
+
 ### The Diagnosis
 
 The error messages were clear:
 
-- `Timed out waiting for device /dev/disk/by-uuid/...` – systemd was trying to mount a disk
-- `Dependency failed for /mnt/sda2` – the mount operation failed
-- The UUID didn't exist
+```
+Timed out waiting for device /dev/disk/by-uuid/...
+  ↓
+systemd was trying to mount a disk
+  ↓
+Dependency failed for /mnt/sda2
+  ↓
+The mount operation failed
+  ↓
+The UUID didn't exist
+```
 
 After waiting and seeing no progress, the system eventually dropped me into **emergency mode**:
 
-![TTY Login in Emergency Mode](screenshots/incident-02-boot-failure/02-tty-emergency-login.png)
+<div align="center">
+<img src="screenshots/incident-02-boot-failure/02-tty-emergency-login.png" alt="TTY Login in Emergency Mode" width="800"/>
+
 *Dropped into TTY3 after boot failure - emergency mode access*
+</div>
 
 ```
 You are in emergency mode. After logging in, type "journalctl -xb" to view
@@ -275,10 +315,17 @@ I knew exactly where to look. Boot-related mount problems live in one place:
 nano /etc/fstab
 ```
 
+---
+
+### The Problem
+
 When I opened it, I saw this at the bottom:
 
-![Broken fstab Configuration](screenshots/incident-02-boot-failure/03-broken-fstab.png)
+<div align="center">
+<img src="screenshots/incident-02-boot-failure/03-broken-fstab.png" alt="Broken fstab Configuration" width="800"/>
+
 *The problematic /etc/fstab with old external HDD mount entries*
+</div>
 
 ```
 # /etc/fstab: static file system information.
@@ -290,20 +337,38 @@ UUID=7DA29C4A4455453E  /mnt/sda2    ntfs  defaults,auto,users,rw,nofail  0  0
 
 Those last two lines – old mount entries for my **1TB external HDD** that was no longer connected. The UUIDs were from partitions that either got reformatted or were on a drive that's gone.
 
+**What fstab does:**
+
+| Column | Purpose | Example |
+|--------|---------|---------|
+| UUID | Permanent disk identifier | `UUID=7DA29C4A...` |
+| Mount Point | Where to mount | `/mnt/sda2` |
+| Filesystem Type | ext4, ntfs, vfat, etc. | `ntfs` |
+| Options | Mount behavior | `defaults,nofail` |
+| Dump | Backup flag (0 or 1) | `0` |
+| Pass | fsck order (0, 1, or 2) | `0` |
+
 So at boot, systemd tried to mount those UUIDs. When it couldn't find them, it waited (hence "Timed out...") and eventually gave up, dropping me into emergency mode.
+
+---
 
 ### The Fix
 
 I deleted those last two lines.
 
-![Fixed fstab Configuration](screenshots/incident-02-boot-failure/04-fixed-fstab.png)
+<div align="center">
+<img src="screenshots/incident-02-boot-failure/04-fixed-fstab.png" alt="Fixed fstab Configuration" width="800"/>
+
 *Fixed /etc/fstab with problematic UUID entries commented out*
+</div>
 
 Then I did something important – I **tested** the fstab without rebooting:
 
 ```bash
 mount -a
 ```
+
+**Critical command:** `mount -a` tries to mount everything in fstab. If there's an error, you'll see it immediately without needing to reboot and potentially break boot again.
 
 No errors appeared. Good.
 
@@ -317,6 +382,8 @@ The system rebooted. No timeout messages. No dependency failures.
 
 The desktop came back normally.
 
+---
+
 ### What I Understood
 
 At that exact moment, I understood something very clearly:
@@ -325,13 +392,31 @@ At that exact moment, I understood something very clearly:
 
 This was deeper than GNOME. This was **systemd's mount system** – the part of the boot sequence that happens before the GUI even exists.
 
-**Time to fix**: ~10 minutes  
-**System**: Ubuntu 24.04 LTS  
-**Difficulty**: Medium (scary at first, but straightforward once I knew where to look)
+**Boot process stages:**
+
+```
+1. BIOS/UEFI loads bootloader (GRUB)
+   ↓
+2. GRUB loads kernel
+   ↓
+3. Kernel starts and mounts root filesystem
+   ↓
+4. Kernel starts systemd (PID 1)
+   ↓
+5. systemd reads fstab and mounts all filesystems  ← I BROKE THIS
+   ↓
+6. systemd starts services (network, display manager, etc.)
+   ↓
+7. Display manager (GDM) starts
+   ↓
+8. You see login screen
+```
+
+I had interrupted step 5, so steps 6-8 never happened.
 
 ---
 
-## 🟢 Incident 3: The Desktop That Wouldn't Die (Today's Experiment)
+## Incident 3: The Desktop That Wouldn't Die
 
 ### The Return
 
@@ -345,6 +430,8 @@ I was again inside Ubuntu – but this time **Ubuntu 24.04** (back then it was 2
 
 This time, I was more conscious. I knew about `top`. I knew about `ps`. I knew about PIDs. I wasn't just blindly typing anymore. I understood that processes have states, signals, and relationships. I knew that `kill -9` is SIGKILL – the nuclear option.
 
+---
+
 ### The Experiment Begins
 
 So I opened:
@@ -353,8 +440,11 @@ So I opened:
 top
 ```
 
-![Top Command Showing GNOME Processes](screenshots/incident-03-auto-recovery/01-top-gnome-processes.png)
+<div align="center">
+<img src="screenshots/incident-03-auto-recovery/01-top-gnome-processes.png" alt="Top Command Showing GNOME Processes" width="800"/>
+
 *Live system monitoring - gnome-shell at the top consuming resources*
+</div>
 
 Again, I saw all the running processes live. CPU, RAM, everything. And again, near the top, I saw processes related to GNOME taking the most resources:
 
@@ -374,8 +464,11 @@ This time I knew the names:
 
 I picked `gnome-shell`. I copied the PID – `12520`.
 
-![Killing gnome-shell Process](screenshots/incident-03-auto-recovery/02-kill-gnome-shell.png)
+<div align="center">
+<img src="screenshots/incident-03-auto-recovery/02-kill-gnome-shell.png" alt="Killing gnome-shell Process" width="800"/>
+
 *Executing kill -9 12520 to terminate gnome-shell*
+</div>
 
 I typed:
 
@@ -387,8 +480,11 @@ The screen **blinked** for a second.
 
 Then... **the login screen appeared.**
 
-![GDM Login Screen After Kill](screenshots/incident-03-auto-recovery/03-login-screen-recovery.png)
+<div align="center">
+<img src="screenshots/incident-03-auto-recovery/03-login-screen-recovery.png" alt="GDM Login Screen After Kill" width="800"/>
+
 *GNOME Display Manager automatically restarted - controlled recovery instead of crash*
+</div>
 
 Not a black dead screen.  
 Not a frozen system.
@@ -402,18 +498,19 @@ I felt confused.
 
 > "Wait... so this time it didn't really crash?"
 
+---
+
 ### Systematic Testing
 
-I thought maybe I picked the wrong process, or maybe I needed to kill multiple things. So I went back:
+I thought maybe I picked the wrong process, or maybe I needed to kill multiple things. So I went back and tried systematically:
 
-```bash
-top
-```
+**Attempt 1: Killing GDM3**
 
-Picked another GNOME-related PID – this time `gdm3`:
+<div align="center">
+<img src="screenshots/incident-03-auto-recovery/04-kill-gdm3-attempt.png" alt="Attempting to Kill GDM3" width="800"/>
 
-![Attempting to Kill GDM3](screenshots/incident-03-auto-recovery/04-kill-gdm3-attempt.png)
 *Trying to kill the display manager - required sudo privileges*
+</div>
 
 ```bash
 kill -9 1715
@@ -421,50 +518,83 @@ bash: kill: (1715) - Operation not permitted
 sudo kill -9 1715
 ```
 
-Again: **1-second freeze → back to login screen.**
+Result: **1-second freeze → back to login screen.**
 
-I tried again with `gnome-session-binary`:
+---
 
-![Killing gnome-session-binary](screenshots/incident-03-auto-recovery/05-kill-gnome-session.png)
+**Attempt 2: Killing gnome-session-binary**
+
+<div align="center">
+<img src="screenshots/incident-03-auto-recovery/05-kill-gnome-session.png" alt="Killing gnome-session-binary" width="800"/>
+
 *Multiple GNOME session processes shown - attempting to kill PID 7487*
+</div>
 
 ```bash
 kill -9 7487
 ```
 
-And again with `Xwayland`:
+Result: **Brief flicker → login screen → normal system.**
 
-![Killing Xwayland Process](screenshots/incident-03-auto-recovery/06-kill-xwayland.png)
+---
+
+**Attempt 3: Killing Xwayland**
+
+<div align="center">
+<img src="screenshots/incident-03-auto-recovery/06-kill-xwayland.png" alt="Killing Xwayland Process" width="800"/>
+
 *Terminating Xwayland (PID 8320) - X11 compatibility layer*
+</div>
 
 ```bash
 kill -9 8320
 ```
 
-And again with `mutter`:
+Result: **Some applications flickered → desktop stayed up.**
 
-![Killing mutter Window Manager](screenshots/incident-03-auto-recovery/07-kill-mutter.png)
+---
+
+**Attempt 4: Killing mutter**
+
+<div align="center">
+<img src="screenshots/incident-03-auto-recovery/07-kill-mutter.png" alt="Killing mutter Window Manager" width="800"/>
+
 *Killing the window manager backend (PID 8410)*
+</div>
 
 ```bash
 kill -9 8410
 ```
 
-And multiple more attempts:
+Result: **Brief freeze → auto-recovery.**
 
-![Additional Kill Attempts](screenshots/incident-03-auto-recovery/08-kill-various-processes.png)
+---
+
+**Additional Attempts:**
+
+<div align="center">
+<img src="screenshots/incident-03-auto-recovery/08-kill-various-processes.png" alt="Additional Kill Attempts" width="800"/>
+
 *Systematic testing - killing gnome-shell PID 5413*
+</div>
 
-![TTY-based Kill Attempt](screenshots/incident-03-auto-recovery/09-tty-kill-attempt.png)
+<div align="center">
+<img src="screenshots/incident-03-auto-recovery/09-tty-kill-attempt.png" alt="TTY-based Kill Attempt" width="800"/>
+
 *Another attempt from TTY - PID 3073*
+</div>
 
 **Every single time, the same pattern:**
 
-**Brief flicker → login screen → normal system.**
+```
+Brief flicker → login screen → normal system
+```
 
 The desktop kept coming back. It refused to stay dead.
 
 No matter what I killed, Ubuntu just refused to fully die.
+
+---
 
 ### The Discovery
 
@@ -477,9 +607,6 @@ Today, I'm on **Ubuntu 24.04**.
 **The system has fundamentally changed between these versions.**
 
 I checked the GDM service configuration:
-
-![GDM3 Service Status](screenshots/incident-03-auto-recovery/10-systemctl-status-gdm3.png)
-*systemctl status gdm3 showing active service with automatic restart capability*
 
 ```bash
 systemctl status gdm3
@@ -516,40 +643,9 @@ RestartSec=1s
 
 That `Restart=always` line is the key. It tells systemd: **"If this service dies for any reason, restart it automatically after 1 second."**
 
-So even when I manually stopped GDM3 with `systemctl stop gdm3`, systemd saw it stop and thought: "It crashed, better restart it" – and brought it back.
-
-Similarly, `gnome-session` now has built-in monitoring. GNOME runs as **systemd user services** that are actively supervised. If `gnome-shell` crashes, `gnome-session` detects it and relaunches it automatically.
-
-### The Evolution
-
-**Old behavior (Ubuntu 22.04)**:
-- `gnome-shell` ran as a regular process
-- If you killed it, it stayed dead
-- No automatic respawn
-- You had to manually restart GDM or reboot
-
-**New behavior (Ubuntu 24.04)**:
-- **systemd user services** monitor GNOME components
-- **Auto-restart policies** configured in service files
-- **gnome-session** actively monitors its child processes
-- **Wayland** has better process isolation and recovery
-
-So what felt like a "system crash" in Ubuntu 22.04 has now become a **controlled session restart** in Ubuntu 24.04.
-
-The evolution is clear:
-
-**Old Linux**: User must know how to fix crashes  
-**Modern Linux**: System fixes itself automatically
-
-This is exactly how production infrastructure works too – auto-healing is no longer optional. It's the default.
-
-**Time spent**: ~20-30 minutes of systematic experimentation  
-**System**: Ubuntu 24.04 LTS  
-**Result**: Couldn't recreate the permanent crash from Incident 1
-
 ---
 
-## 🎯 What These Three Incidents Taught Me
+## What These Incidents Taught Me
 
 ### The Complete Journey
 
@@ -569,160 +665,183 @@ I was just asking one question again and again:
 
 And Linux answered every time – sometimes gently with a login screen, sometimes brutally with a black screen and emergency mode.
 
-### Technical Skills Demonstrated
+---
 
-**Process Management**
+## Technical Skills Demonstrated
+
+### Process Management
 - Understanding PIDs and process hierarchy
 - Process states and signals (SIGTERM vs SIGKILL)
 - Using `ps`, `top`, `kill`, `killall`
 - The `/proc` filesystem as a window into running processes
 
-**systemd Service Management**
+### systemd Service Management
 - Service control (`systemctl start/stop/restart/status`)
 - Service configuration files and restart policies
 - Understanding targets (graphical.target)
 - User services vs system services
 - Auto-restart mechanisms (`Restart=always`)
 
-**Boot Process & Recovery**
+### Boot Process & Recovery
 - GRUB → Kernel → systemd boot sequence
 - Boot stages and dependencies
 - Emergency mode access and usage
 - Reading boot logs with `journalctl -xb`
 - Understanding why boot can fail
 
-**Filesystem & Mounts**
+### Filesystem & Mounts
 - `/etc/fstab` syntax, purpose, and critical role in boot
 - UUID-based disk identification vs device names
 - Using `mount -a` to test configurations safely
 - Mount dependencies in systemd boot process
 - How disconnected drives can break boot
 
-**Desktop Environment Architecture**
+### Desktop Environment Architecture
 - Display managers (GDM) and their role
 - Compositors and window managers (gnome-shell, mutter)
 - Session managers (gnome-session-binary)
 - Wayland vs X11 differences
 - Process supervision and auto-recovery
 
-**Recovery Techniques**
+### Recovery Techniques
 - TTY navigation (Ctrl+Alt+F1-F6)
 - Emergency mode troubleshooting workflow
 - Service restoration methods
 - System recovery without data loss
 - Testing changes before committing (mount -a before reboot)
 
-**System Evolution Understanding**
-- Version differences (Ubuntu 22.04 vs 24.04)
-- Auto-healing mechanisms in modern systems
-- Service monitoring and automatic recovery
-- Modern resilience patterns matching production infrastructure
+---
 
 ### Troubleshooting Methodology I Developed
 
-1. **Stay calm** - Panic wastes time and clouds judgment
-2. **Identify the layer** - Is this GUI, boot, network, or something else?
-3. **Check logs** - `journalctl`, `dmesg`, service status give clues
-4. **Test safely** - Validate changes before committing (like `mount -a`)
-5. **Document** - Record what worked for next time
-6. **Understand, don't memorize** - Know WHY it broke, not just HOW to fix
+```
+1. Stay calm
+   ↓
+   Panic wastes time and clouds judgment
 
----
+2. Identify the layer
+   ↓
+   Is this GUI, boot, network, or something else?
 
-## 📋 Commands I Now Know
+3. Check logs
+   ↓
+   journalctl, dmesg, service status give clues
 
-```bash
-# Process monitoring and control
-top                          # Real-time process viewer with CPU/memory
-ps aux | grep <process>      # Find specific processes
-kill -9 <PID>               # Force kill process (SIGKILL - nuclear option)
-killall <process-name>       # Kill all instances by name
-pgrep <process-name>         # Find PID by process name
+4. Test safely
+   ↓
+   Validate changes before committing (like mount -a)
 
-# systemd service management
-systemctl status <service>   # Check service status and recent logs
-systemctl restart <service>  # Restart a service
-systemctl stop <service>     # Stop a service
-systemctl start <service>    # Start a service
-systemctl cat <service>      # View service configuration file
-systemctl show <service> -p Restart   # Check restart policy
-systemctl isolate graphical.target    # Switch to graphical mode
-systemctl --user list-units  # List user services
-loginctl list-sessions       # Show active login sessions
+5. Document
+   ↓
+   Record what worked for next time
 
-# Boot and recovery
-journalctl -xb              # View boot logs with explanations
-mount -a                    # Test fstab without reboot (CRITICAL)
-nano /etc/fstab            # Edit filesystem table
-blkid                      # Show disk UUIDs and filesystem types
-systemctl default          # Exit emergency mode to normal boot
-
-# System information
-echo $XDG_SESSION_TYPE     # Check if using Wayland or X11
-tty                        # Show current TTY number
-uname -r                   # Show kernel version
-lsb_release -a             # Show Ubuntu version
-gnome-shell --version      # Show GNOME Shell version
+6. Understand, don't memorize
+   ↓
+   Know WHY it broke, not just HOW to fix
 ```
 
 ---
 
-## ⚠️ What I Cannot Yet Do (Honest Gaps)
+## Commands I Practice
 
-Being honest about what I don't know yet:
+### Process Monitoring and Control
+```bash
+# Real-time process viewer with CPU/memory
+top
 
-- ❌ **No real cloud troubleshooting** - This is desktop Linux on my personal system, not production AWS/Azure/GCP infrastructure
-- ❌ **No automation scripts** - Haven't written bash scripts for system administration tasks yet
-- ❌ **No Infrastructure as Code** - No hands-on experience with Terraform, CloudFormation, or Ansible
-- ❌ **No monitoring stack** - Haven't set up Prometheus, Grafana, ELK, or other monitoring tools
-- ❌ **No CI/CD pipelines** - No Jenkins, GitLab CI, GitHub Actions, or deployment automation experience
-- ❌ **No containerization at scale** - Limited Docker knowledge, no Kubernetes or container orchestration
-- ❌ **No configuration management** - No Puppet, Chef, or SaltStack experience
-- ❌ **No production incidents** - Haven't troubleshooted real user-facing outages or scaled systems
+# Find specific processes
+ps aux | grep <process>
+
+# Force kill process (SIGKILL - nuclear option)
+kill -9 <PID>
+
+# Kill all instances by name
+killall <process-name>
+
+# Find PID by process name
+pgrep <process-name>
+```
+
+### systemd Service Management
+```bash
+# Check service status and recent logs
+systemctl status <service>
+
+# Restart a service
+systemctl restart <service>
+
+# Stop a service
+systemctl stop <service>
+
+# Start a service
+systemctl start <service>
+
+# View service configuration file
+systemctl cat <service>
+
+# Check restart policy
+systemctl show <service> -p Restart
+
+# Switch to graphical mode
+systemctl isolate graphical.target
+
+# List user services
+systemctl --user list-units
+
+# Show active login sessions
+loginctl list-sessions
+```
+
+### Boot and Recovery
+```bash
+# View boot logs with explanations
+journalctl -xb
+
+# Test fstab without reboot (CRITICAL)
+mount -a
+
+# Edit filesystem table
+nano /etc/fstab
+
+# Show disk UUIDs and filesystem types
+blkid
+
+# Exit emergency mode to normal boot
+systemctl default
+```
+
+### System Information
+```bash
+# Check if using Wayland or X11
+echo $XDG_SESSION_TYPE
+
+# Show current TTY number
+tty
+
+# Show kernel version
+uname -r
+
+# Show Ubuntu version
+lsb_release -a
+
+# Show GNOME Shell version
+gnome-shell --version
+```
 
 ---
 
-## 🚀 What I'm Learning Next (Roadmap)
-
-**Short-term (Next 2-3 months)**:
-1. AWS EC2 troubleshooting using serial console and EBS volume recovery
-2. Docker container debugging, logging, and basic networking
-3. Basic bash scripting for system automation and health checks
-4. Terraform fundamentals for Infrastructure as Code
-5. Cloud-init and user-data for automated instance configuration
-
-**Goal**: Translate these desktop troubleshooting skills to real cloud infrastructure work.
-
----
-
-## 🔗 Cloud Connection (Conceptual Mapping Only)
-
-While I haven't done cloud troubleshooting yet, I can see how my desktop experiences map conceptually to cloud scenarios:
-
-| My Desktop Experience | Cloud Infrastructure Equivalent |
-|-----------------------|--------------------------------|
-| Emergency mode (root shell) | AWS EC2 Serial Console for unresponsive instances |
-| `/etc/fstab` mount failures | EBS volume attachment errors or wrong device names |
-| systemd service restarts | Auto Scaling Group health checks and replacements |
-| `gnome-shell` auto-recovery | Kubernetes pod restart policies and liveness probes |
-| TTY access when GUI fails | AWS Systems Manager Session Manager for terminal access |
-| Boot process debugging | cloud-init troubleshooting and user-data script failures |
-| Testing with `mount -a` | Validating Terraform plans before applying |
-| Multiple reboot attempts | Instance stop/start cycles to recover from bad state |
-
-**Important disclaimer**: This is conceptual understanding based on research, not hands-on cloud experience yet. I'm actively building toward these skills.
-
----
-
-## 📬 Connect With Me
+## Connect With Me
 
 I'm actively learning and seeking opportunities in Linux administration and cloud engineering.
 
-**Email**: jillahir9999@gmail.com  
-**GitHub**: [github.com/jillravaliya](https://github.com/jillravaliya)  
-**LinkedIn**: [linkedin.com/in/jill-ravaliya-684a98264](https://linkedin.com/in/jill-ravaliya-684a98264)
+[![Email](https://img.shields.io/badge/Email-jillahir9999%40gmail.com-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:jillahir9999@gmail.com)
+[![GitHub](https://img.shields.io/badge/GitHub-jillravaliya-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/jillravaliya)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Jill_Ravaliya-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/jill-ravaliya-684a98264)
 
-**Looking for**:
+</div>
+
+### Looking For
+
 - Junior Linux Administrator roles
 - Entry-level Cloud Engineer positions (trainee/intern level)
 - Linux Support Engineer roles
@@ -731,51 +850,10 @@ I'm actively learning and seeking opportunities in Linux administration and clou
 
 ---
 
-## 📁 Repository Structure
-
-```
-linux-troubleshooting-journey/
-├── README.md (this file)
-├── screenshots/
-│   ├── incident-02-boot-failure/
-│   │   ├── 01-timeout-errors.png
-│   │   ├── 02-tty-emergency-login.png
-│   │   ├── 03-broken-fstab.png
-│   │   └── 04-fixed-fstab.png
-│   └── incident-03-auto-recovery/
-│       ├── 01-top-gnome-processes.png
-│       ├── 02-kill-gnome-shell.png
-│       ├── 03-login-screen-recovery.png
-│       ├── 04-kill-gdm3-attempt.png
-│       ├── 05-kill-gnome-session.png
-│       ├── 06-kill-xwayland.png
-│       ├── 07-kill-mutter.png
-│       ├── 08-kill-various-processes.png
-│       ├── 09-tty-kill-attempt.png
-│       └── 10-systemctl-status-gdm3.png
-├── incidents/
-│   ├── 01-killed-gnome-first-time/
-│   │   ├── detailed-story.md
-│   │   ├── what-i-learned.md
-│   │   └── recovery-steps.md
-│   ├── 02-fstab-boot-failure/
-│   │   ├── detailed-story.md
-│   │   ├── broken-fstab-example.txt
-│   │   ├── fixed-fstab-example.txt
-│   │   └── emergency-mode-guide.md
-│   └── 03-gui-resilience-ubuntu-2404/
-│       ├── detailed-story.md
-│       ├── systemd-auto-restart-analysis.md
-│       └── version-comparison.md
-├── commands/
-│   └── reference-guide.md
-└── learning/
-    ├── troubleshooting-methodology.md
-    └── next-steps-roadmap.md
-```
+> **"Sometimes breaking things teaches you more in 10 minutes than reading for 10 days."**
 
 ---
 
-*"Sometimes breaking things teaches you more in 10 minutes than reading for 10 days."*
-
 **Final Note**: This documents real desktop Linux troubleshooting on my personal Ubuntu system. This is not production cloud experience yet – I'm building foundational skills to transition into cloud engineering roles.
+
+</div>
